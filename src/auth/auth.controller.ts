@@ -3,7 +3,7 @@ import { AuthService } from "./auth.service";
 import { RequestOTPDTO } from "./dtos/request-otp.dto";
 import { VerifyOTPDTO } from "./dtos/verify-otp.dto";
 import { ClientInfoDecorator } from "../common/decorators/client-info.decorator";
-import type { ClientInfo } from "../common/interfaces/client-info.interface"; // ✅ add this
+import type { ClientInfo } from "../common/interfaces/client-info.interface"; 
 
 @Controller('auth')
 export class AuthController {
