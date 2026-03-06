@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { User, UserDocument } from "src/user/schema/user.schema";
@@ -67,6 +67,31 @@ export class AuthService {
     }
 
     async VerifyOTP(token: string, otp: string) {
+        const payload = this.jwtService.verify(token)
 
+        if (payload.type !== "OTP_TOKEN") {
+            throw new UnauthorizedException("Token Type Not Match")
+        }
+
+        const checkuser = await this.otpModel.findOne({ email: payload.email })
+        
+        if (!checkuser) {
+            throw new NotFoundException("OTP Recodes not found go back and try again")
+        }
+
+        const checkotp = await bcrypt.compare(otp, checkuser.otp)
+
+        if (!checkotp) {
+            throw new UnauthorizedException("Password (OTP) Not Match")
+        }
+
+        const user = await this.userModel.findOne({ email: payload.email })
+
+        const logintoken = this.jwtService.sign({ sub: user?._id, user: user?.email, role: user?.role, type: "LOGIN_TOKEN" })
+        await this.emailService.NotificationEmail(payload.email, "Login Success")
+
+        await this.otpModel.deleteOne({ email: payload.email })
+
+        return ({ success: true, message: "Login Success", token: logintoken })
     }
 }
