@@ -54,6 +54,16 @@ export class AuthService {
 
             return ({ success: true, message: "Registation Success, OTP send to Email...", token: token })
         }
+        else {
+            await this.emailService.sendOTP(user.email, otp)
+
+            const token = this.jwtService.sign(
+                { sub: user._id, email, type: "OTP_TOKEN" },
+                { expiresIn: '5m' }
+            );
+
+            return ({ success: true, message: "Welcome Back, OTP send to Email...", token: token })
+        }
     }
 
     async VerifyOTP(token: string, otp: string) {
