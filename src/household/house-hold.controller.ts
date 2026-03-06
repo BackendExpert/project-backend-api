@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, Req, UseGuards, ForbiddenException } from "@nestjs/common";
 import { HouseHoldService } from "./house-hold.service";
 import { CreateHouseHoldDTO } from "./dtos/create-household.dto";
 import { ClientInfoDecorator } from "src/common/decorators/client-info.decorator";
@@ -23,9 +23,15 @@ export class HouseHoldController {
     ) {
         // const user = req.user;
         const user = (req as any).user.user;
+        const ability = req.ability;
+
         // console.log("JWT user:", req.user, "UserEmail", req.user.email, (req as any).user.user);
         // console.log(dto.housing_type);
-        
+        if (!req.ability.can(Actions.CREATE, 'Household')) {
+            throw new ForbiddenException("You do not have permission to create a household");
+        }
+
+
         return this.householdService.CreateHouseHold(
             user,
             dto,
