@@ -1,6 +1,6 @@
 import { IsEmail, IsString, Length } from "class-validator";
 
-export class VerifyDTO {
+export class VerifyOTPDTO {
     @IsString()
     @Length(8)
     otp: string;
