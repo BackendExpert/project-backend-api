@@ -2,7 +2,8 @@ import { Body, Controller, Headers, Post, UnauthorizedException } from "@nestjs/
 import { AuthService } from "./auth.service";
 import { RequestOTPDTO } from "./dtos/request-otp.dto";
 import { VerifyOTPDTO } from "./dtos/verify-otp.dto";
-import { ClientInfo } from "../common/decorators/client-info.decorator";
+import { ClientInfoDecorator } from "../common/decorators/client-info.decorator";
+import type { ClientInfo } from "../common/interfaces/client-info.interface"; // ✅ add this
 
 @Controller('auth')
 export class AuthController {
@@ -11,7 +12,7 @@ export class AuthController {
     @Post('request-otp')
     requestOTP(
         @Body() dto: RequestOTPDTO,
-        @ClientInfo() client
+        @ClientInfoDecorator() client: ClientInfo
     ) {
         return this.authService.RequestOTP(
             dto.email,
@@ -24,7 +25,7 @@ export class AuthController {
     verifyOTP(
         @Body() dto: VerifyOTPDTO,
         @Headers('authorization') authHeader: string,
-        @ClientInfo() client
+        @ClientInfoDecorator() client: ClientInfo
     ) {
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw new UnauthorizedException("Invalid or missing token");
