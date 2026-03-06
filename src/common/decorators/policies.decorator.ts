@@ -1,7 +1,7 @@
-import { SetMetadata } from '@nestjs/common';
-import { Actions } from '../policies/casl-ability.factory';
+import { SetMetadata } from "@nestjs/common";
+import { Actions } from "../policies/actions.enum";
 
-export const CHECK_POLICIES = 'check_policies';
+export const CHECK_POLICIES_KEY = "check_policy";
 
-export const CheckPolicies = (action: Actions, subject: string) =>
-    SetMetadata(CHECK_POLICIES, { action, subject });
+export const CheckPolicies = (action: Actions, subject: any) =>
+    SetMetadata(CHECK_POLICIES_KEY, { action, subject });
