@@ -1,7 +1,6 @@
-import { Actions } from "./actions.enum";
+import { Actions } from './actions.enum';
 
-export const RolePermissions = {
-
+export const RolePermissions: Record<string, { action: Actions, subject: string }[]> = {
     SUPER_ADMIN: [
         { action: Actions.MANAGE, subject: 'all' }
     ],
@@ -17,11 +16,9 @@ export const RolePermissions = {
         { action: Actions.CREATE, subject: 'Citizen' },
         { action: Actions.UPDATE, subject: 'Citizen' },
         { action: Actions.READ, subject: 'Citizen' },
-
         { action: Actions.CREATE, subject: 'Household' },
         { action: Actions.UPDATE, subject: 'Household' },
         { action: Actions.READ, subject: 'Household' },
-
         { action: Actions.CREATE, subject: 'EducationRecord' },
         { action: Actions.CREATE, subject: 'EmploymentRecord' },
         { action: Actions.CREATE, subject: 'HealthRecord' }
@@ -83,5 +80,9 @@ export const RolePermissions = {
     AUDITOR: [
         { action: Actions.READ, subject: 'ActivityLog' },
         { action: Actions.READ, subject: 'User' }
+    ],
+
+    CITIZEN: [
+        { action: Actions.READ, subject: 'WelfareProgram' }
     ]
 };

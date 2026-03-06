@@ -1,37 +1,31 @@
 import { AbilityBuilder, Ability } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 import { Actions } from './actions.enum';
-import { Subjects } from './subjects.type';
 import { RolePermissions } from './permissions.matrix';
 
-export type AppAbility = Ability<[Actions, Subjects]>;
+export type AppAbility = Ability<[Actions, string]>;
 
 @Injectable()
 export class CaslAbilityFactory {
 
-    createForUser(user: any) {
-
+    createForUser(user: any): AppAbility {
         const { can, build } = new AbilityBuilder<AppAbility>(Ability as any);
 
-        const roles = user.roles || [];
+        const roles = user?.roles || [];
+
+        if (roles.includes('super_admin')) {
+            can(Actions.MANAGE, 'all');
+        }
 
         roles.forEach(role => {
-
+            if (role === 'super_admin') return;
             const permissions = RolePermissions[role] || [];
-
-            permissions.forEach(permission => {
-                can(permission.action, permission.subject as Subjects);
-            });
-
+            permissions.forEach(p => can(p.action, p.subject));
         });
 
-        // Citizen self-access rule
-        if (roles.includes('CITIZEN')) {
-
+        if (roles.includes('citizen')) {
             can(Actions.READ, 'Citizen', { id: user.sub });
             can(Actions.UPDATE, 'Citizen', { id: user.sub });
-            can(Actions.READ, 'WelfareProgram');
-
         }
 
         return build();
