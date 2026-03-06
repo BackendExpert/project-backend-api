@@ -66,7 +66,8 @@ export class AuthService {
 
             return { success: true, message: "Registration successful, OTP sent to email", token };
         } else {
-            await this.emailService.sendOTP(user.email, otp);
+            // await this.emailService.sendOTP(user.email, otp);
+            await this.emailService.sendOTP(user.email, otp, ipAddress, userAgent);
 
             const token = this.jwtService.sign(
                 { sub: user._id, email, type: "OTP_TOKEN" },
@@ -100,6 +101,9 @@ export class AuthService {
         }
 
         const user = await this.userModel.findOne({ email: payload.email });
+        if (!user) {
+            throw new NotFoundException("User not found");
+        }
 
         const isOTPValid = await bcrypt.compare(otp, otpRecord.otp);
         if (!isOTPValid) {
@@ -114,7 +118,8 @@ export class AuthService {
             throw new UnauthorizedException("OTP does not match");
         }
 
-
+        user.last_login = new Date();
+        await user.save();
 
         const loginToken = this.jwtService.sign({
             sub: user?._id,
@@ -123,7 +128,8 @@ export class AuthService {
             type: "LOGIN_TOKEN"
         });
 
-        await this.emailService.NotificationEmail(user?.email || '', "Login Success");
+        // await this.emailService.NotificationEmail(user?.email || '', "Login Success");
+        await this.emailService.NotificationEmail(user?.email || '', "Login Success", ipAddress, userAgent);
         await this.otpModel.deleteOne({ email: payload.email });
 
         // Audit log for successful login
@@ -135,6 +141,8 @@ export class AuthService {
             userAgent,
             metadata: { ipAddress, userAgent }
         });
+
+
 
         return { success: true, message: "Login successful", token: loginToken };
     }
