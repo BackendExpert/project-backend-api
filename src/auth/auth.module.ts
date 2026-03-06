@@ -4,10 +4,11 @@ import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { User, UserSchema } from "src/user/schema/user.schema";
 import { OTP, OTPSchema } from "./schema/otp.schema";
-import { authController } from "./auth.controller";
+import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
 import { EmailService } from "src/common/utils/email.util";
+import { AuditLog, AuditLogSchema } from "src/auditlogs/schema/auditlog.schema";
 
 @Module({
     imports: [
@@ -21,10 +22,11 @@ import { EmailService } from "src/common/utils/email.util";
         }),
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema },
-            { name: OTP.name, schema: OTPSchema}
+            { name: OTP.name, schema: OTPSchema},
+            { name: AuditLog.name, schema: AuditLogSchema}
         ])
     ],
-    controllers: [authController],
+    controllers: [AuthController],
     providers: [AuthService, JwtStrategy, EmailService],
     exports: [JwtModule]
 })

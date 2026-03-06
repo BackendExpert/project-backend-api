@@ -6,7 +6,9 @@ import { OTP, OTPDocument } from "./schema/otp.schema";
 import { JwtService } from "@nestjs/jwt";
 import { EmailService } from "src/common/utils/email.util";
 import { generateOTP } from "src/common/utils/otp.util";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import { createAuditLog } from "src/common/utils/auditlogs.util";
+import { AuditLog, AuditLogDocument } from "src/auditlogs/schema/auditlog.schema";
 
 @Injectable()
 export class AuthService {
@@ -17,81 +19,123 @@ export class AuthService {
         @InjectModel(OTP.name)
         private otpModel: Model<OTPDocument>,
 
+        @InjectModel(AuditLog.name)
+        private auditLogModel: Model<AuditLogDocument>,
+
         private jwtService: JwtService,
         private emailService: EmailService,
     ) { }
 
-    async ReqeustOTP(email: string) {
-        let checkotp = await this.otpModel.findOne({ email })
+    async RequestOTP(email: string, ipAddress?: string, userAgent?: string) {
+        const existingOTP = await this.otpModel.findOne({ email });
 
-        if (checkotp) {
-            throw new ConflictException("OTP already Sent, check Email...")
+        if (existingOTP) {
+            throw new ConflictException("OTP already sent, check your email...");
         }
 
-        const otp: string = generateOTP(8);
-        const expireOTP = new Date(Date.now() + 5 * 60 * 1000)
+        const otp = generateOTP(8);
+        const expireOTP = new Date(Date.now() + 5 * 60 * 1000);
+        const hashedOTP = await bcrypt.hash(otp, 10);
 
-        const hashotp = await bcrypt.hash(otp, 10)
-
-        const otpRecord = new this.otpModel({
+        await this.otpModel.create({
             email,
-            otp: hashotp,
+            otp: hashedOTP,
             expireAt: expireOTP,
         });
-        await otpRecord.save();
 
-        let user = await this.userModel.findOne({ email })
+        let user = await this.userModel.findOne({ email });
 
         if (!user) {
-            user = new this.userModel({ email })
-            await user.save()
-            await this.emailService.sendOTP(user.email, otp)
+            user = await this.userModel.create({ email });
+            await this.emailService.sendOTP(user.email, otp);
 
             const token = this.jwtService.sign(
                 { sub: user._id, email, type: "OTP_TOKEN" },
                 { expiresIn: '5m' }
             );
 
-            return ({ success: true, message: "Registation Success, OTP send to Email...", token: token })
-        }
-        else {
-            await this.emailService.sendOTP(user.email, otp)
+            // Audit log for new registration OTP
+            await createAuditLog(this.auditLogModel, {
+                user: user._id,
+                action: "REGISTER_OTP_SENT",
+                description: `Registration OTP sent to ${user.email}`,
+                ipAddress,
+                userAgent,
+                metadata: { ipAddress, userAgent }
+            });
+
+            return { success: true, message: "Registration successful, OTP sent to email", token };
+        } else {
+            await this.emailService.sendOTP(user.email, otp);
 
             const token = this.jwtService.sign(
                 { sub: user._id, email, type: "OTP_TOKEN" },
                 { expiresIn: '5m' }
             );
 
-            return ({ success: true, message: "Welcome Back, OTP send to Email...", token: token })
+            // Audit log for login OTP
+            await createAuditLog(this.auditLogModel, {
+                user: user._id,
+                action: "LOGIN_OTP_SENT",
+                description: `Login OTP sent to ${user.email}`,
+                ipAddress,
+                userAgent,
+                metadata: { ipAddress, userAgent }
+            });
+
+            return { success: true, message: "Welcome back, OTP sent to email", token };
         }
     }
 
-    async VerifyOTP(token: string, otp: string) {
-        const payload = this.jwtService.verify(token)
+    async VerifyOTP(token: string, otp: string, ipAddress?: string, userAgent?: string) {
+        const payload = this.jwtService.verify(token);
 
         if (payload.type !== "OTP_TOKEN") {
-            throw new UnauthorizedException("Token Type Not Match")
+            throw new UnauthorizedException("Token type mismatch");
         }
 
-        const checkuser = await this.otpModel.findOne({ email: payload.email })
-        
-        if (!checkuser) {
-            throw new NotFoundException("OTP Recodes not found go back and try again")
+        const otpRecord = await this.otpModel.findOne({ email: payload.email });
+        if (!otpRecord) {
+            throw new NotFoundException("OTP record not found, try again");
         }
 
-        const checkotp = await bcrypt.compare(otp, checkuser.otp)
+        const user = await this.userModel.findOne({ email: payload.email });
 
-        if (!checkotp) {
-            throw new UnauthorizedException("Password (OTP) Not Match")
+        const isOTPValid = await bcrypt.compare(otp, otpRecord.otp);
+        if (!isOTPValid) {
+            await createAuditLog(this.auditLogModel, {
+                user: user?._id,
+                action: "LOGIN_FAILD - WRONG_OTP",
+                description: `Login Faild with Wrong OTP`,
+                ipAddress,
+                userAgent,
+                metadata: { ipAddress, userAgent }
+            });
+            throw new UnauthorizedException("OTP does not match");
         }
 
-        const user = await this.userModel.findOne({ email: payload.email })
 
-        const logintoken = this.jwtService.sign({ sub: user?._id, user: user?.email, role: user?.role, type: "LOGIN_TOKEN" })
-        await this.emailService.NotificationEmail(payload.email, "Login Success")
 
-        await this.otpModel.deleteOne({ email: payload.email })
+        const loginToken = this.jwtService.sign({
+            sub: user?._id,
+            user: user?.email,
+            role: user?.role,
+            type: "LOGIN_TOKEN"
+        });
 
-        return ({ success: true, message: "Login Success", token: logintoken })
+        await this.emailService.NotificationEmail(user?.email || '', "Login Success");
+        await this.otpModel.deleteOne({ email: payload.email });
+
+        // Audit log for successful login
+        await createAuditLog(this.auditLogModel, {
+            user: user?._id,
+            action: "LOGIN_SUCCESS",
+            description: `User logged in successfully`,
+            ipAddress,
+            userAgent,
+            metadata: { ipAddress, userAgent }
+        });
+
+        return { success: true, message: "Login successful", token: loginToken };
     }
 }
