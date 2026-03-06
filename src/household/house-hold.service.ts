@@ -6,6 +6,8 @@ import { AuditLog, AuditLogDocument } from "src/auditlogs/schema/auditlog.schema
 import { createAuditLog } from "src/common/utils/auditlogs.util";
 import { JwtService } from "@nestjs/jwt";
 import { User, UserDocument } from "src/user/schema/user.schema";
+import { CreateHouseHoldDTO } from "./dtos/create-household.dto";
+
 
 @Injectable()
 export class HouseHoldService {
@@ -24,63 +26,41 @@ export class HouseHoldService {
 
 
     async CreateHouseHold(
-        token: string,
-        house_number: string,
-        address: string,
-        village: string,
-        head_of_household: string,
-        member_count: number,
-        income_level: string,
-        land_ownership: boolean,
-        water_source: string,
-        electricity_available: boolean,
-        sanitation_type: string,
-        gps_location: string,
+        email: string,
+        dto: CreateHouseHoldDTO,
         ipAddress: string,
-        userAgent: string,
+        userAgent: string
     ) {
-        const payload = this.jwtService.verify(token)
+        const user = await this.userModel.findOne({ email });
+        if (!user) throw new NotFoundException("User Not Found");
 
-        const user = await this.userModel.findOne({ email: payload.email })
+        const checkhouse = await this.householdModel.findOne({ house_number: dto.house_number });
+        if (checkhouse) throw new ConflictException("The House is Already Registered");
 
-        if(!user){
-            throw new NotFoundException("User Not Found")
-        }
-
-        const checkhouse = await this.householdModel.findOne({ house_number: house_number })
-
-        if (checkhouse) {
-            throw new ConflictException("The House is Already Registed")
-        }
-
-        await this.householdModel.create({
-            house_number,
-            address,
-            village,
-            head_of_household,
-            member_count,
-            income_level,
-            land_ownership,
-            water_source,
-            electricity_available,
-            sanitation_type,
-            gps_location,
-        })
-
+        const house = await this.householdModel.create({
+            house_number: dto.house_number,
+            address: dto.address,
+            village: dto.village,
+            head_of_household: dto.head_of_household,
+            member_count: dto.member_count,
+            income_level: dto.income_level,
+            land_ownership: dto.land_ownership,
+            water_source: dto.water_source,
+            electricity_available: dto.electricity_available,
+            sanitation_type: dto.sanitation_type,
+            housing_type: dto.housing_type,
+            gps_location: dto.gps_location
+        });
 
         await createAuditLog(this.auditlogModel, {
             user: user._id,
-            action: "HOUSE_REGISTED",
-            description: `The House ${house_number} Registed at System Successful by, ${user.email}`,
+            action: "HOUSE_REGISTERED",
+            description: `House ${dto.house_number} registered by ${user.email}`,
             ipAddress,
             userAgent,
             metadata: { ipAddress, userAgent }
         });
 
-        return {
-            success: true,
-            message: "THe House Is Registatd Successfully"
-        }
-
+        return { success: true, message: "House registered successfully" };
     }
 }

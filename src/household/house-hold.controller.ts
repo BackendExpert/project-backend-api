@@ -1,16 +1,16 @@
-import { Body, Controller, Headers, Post, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
 import { HouseHoldService } from "./house-hold.service";
 import { CreateHouseHoldDTO } from "./dtos/create-household.dto";
 import { ClientInfoDecorator } from "src/common/decorators/client-info.decorator";
 import type { ClientInfo } from "../common/interfaces/client-info.interface";
 import { CheckPolicies } from "src/common/decorators/policies.decorator";
-import { Actions } from "../common/policies/casl-ability.factory";
+import { Actions } from "src/common/policies/casl-ability.factory";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { PoliciesGuard } from "src/common/policies/policies.guard";
+import type { AuthRequest } from '../common/interfaces/auth-request.interface';
 
 @Controller("house-hold")
 @UseGuards(JwtAuthGuard, PoliciesGuard)
-
 export class HouseHoldController {
     constructor(private readonly householdService: HouseHoldService) { }
 
@@ -18,30 +18,19 @@ export class HouseHoldController {
     @CheckPolicies(Actions.CREATE, 'Household')
     CreateHouseHold(
         @Body() dto: CreateHouseHoldDTO,
-        @Headers('authorization') authHeader: string,
+        @Req() req: AuthRequest,
         @ClientInfoDecorator() client: ClientInfo
     ) {
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            throw new UnauthorizedException("Invalid or missing token");
-        }
-
-        const token = authHeader.split(' ')[1];
-
+        // const user = req.user;
+        const user = (req as any).user.user;
+        // console.log("JWT user:", req.user, "UserEmail", req.user.email, (req as any).user.user);
+        // console.log(dto.housing_type);
+        
         return this.householdService.CreateHouseHold(
-            token,
-            dto.house_number,
-            dto.address,
-            dto.village,
-            dto.head_of_household,
-            dto.member_count,
-            dto.income_level,
-            dto.land_ownership,
-            dto.water_source,
-            dto.electricity_available,
-            dto.sanitation_type,
-            dto.gps_location,
+            user,
+            dto,
             client.ipAddress,
-            client.userAgent,
-        )
+            client.userAgent
+        );
     }
 }
