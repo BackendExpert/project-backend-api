@@ -1,0 +1,126 @@
+[
+    {
+        "_id": "6837b60b735077d2866f126b",
+        "role_name": "super_admin",
+        "role_permissions": [
+            "manage_all"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f126c",
+        "role_name": "system_admin",
+        "role_permissions": [
+            "manage_User",
+            "read_ActivityLog",
+            "read_Citizen",
+            "read_Household"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f126d",
+        "role_name": "data_entry_officer",
+        "role_permissions": [
+            "create_Citizen",
+            "update_Citizen",
+            "read_Citizen",
+            "create_Household",
+            "update_Household",
+            "read_Household",
+            "create_EducationRecord",
+            "create_EmploymentRecord",
+            "create_HealthRecord",
+            "cannot_delete_Citizen"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f126e",
+        "role_name": "data_manager",
+        "role_permissions": [
+            "read_Citizen",
+            "update_Citizen",
+            "verify_Citizen",
+            "approve_Citizen",
+            "report_Citizen"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f126f",
+        "role_name": "village_officer",
+        "role_permissions": [
+            "read_Citizen",
+            "read_Household",
+            "read_VillageAsset",
+            "report_Citizen"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1270",
+        "role_name": "welfare_officer",
+        "role_permissions": [
+            "read_Citizen",
+            "create_WelfareProgram",
+            "update_WelfareProgram",
+            "approve_WelfareProgram",
+            "report_WelfareProgram"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1271",
+        "role_name": "agriculture_officer",
+        "role_permissions": [
+            "read_Citizen",
+            "create_AgricultureRecord",
+            "update_AgricultureRecord",
+            "read_AgricultureRecord",
+            "report_AgricultureRecord"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1272",
+        "role_name": "health_officer",
+        "role_permissions": [
+            "read_Citizen",
+            "create_HealthRecord",
+            "update_HealthRecord",
+            "read_HealthRecord",
+            "report_HealthRecord"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1273",
+        "role_name": "education_officer",
+        "role_permissions": [
+            "read_Citizen",
+            "create_EducationRecord",
+            "update_EducationRecord",
+            "read_EducationRecord",
+            "report_EducationRecord"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1274",
+        "role_name": "analyst",
+        "role_permissions": [
+            "read_Citizen",
+            "read_Household",
+            "report_Citizen"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1275",
+        "role_name": "auditor",
+        "role_permissions": [
+            "read_ActivityLog",
+            "read_User"
+        ]
+    },
+    {
+        "_id": "6837b60b735077d2866f1276",
+        "role_name": "citizen",
+        "role_permissions": [
+            "read_Citizen",
+            "update_Citizen",
+            "read_WelfareProgram"
+        ]
+    }
+]
