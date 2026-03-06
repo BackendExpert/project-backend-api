@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { Actions } from './casl-ability.factory';
+import { Actions } from '../policies/casl-ability.factory';
 
 export const CHECK_POLICIES = 'check_policies';
 
