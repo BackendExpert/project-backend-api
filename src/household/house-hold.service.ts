@@ -61,6 +61,8 @@ export class HouseHoldService {
             metadata: { ipAddress, userAgent }
         });
 
+        
+
         return { success: true, message: "House registered successfully" };
     }
 }
